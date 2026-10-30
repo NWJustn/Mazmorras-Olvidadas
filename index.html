@@ -2,6 +2,17 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14121f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mazmorras">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta property="og:title" content="Mazmorras olvidadas">
+<meta property="og:description" content="Juego de mazmorras en pixel art. Funciona sin internet.">
+<meta property="og:image" content="banner.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mazmorras olvidadas</title>
 <style>
@@ -30,11 +41,16 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
 #cls canvas{width:64px;height:64px;image-rendering:pixelated}
 #cd{min-height:44px;color:var(--dim);font-size:14px}
 #lg canvas{width:72px;height:72px;image-rendering:pixelated}
-#cin{position:fixed;inset:0;z-index:30;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px}
-#cc{width:100%;max-width:420px;flex:1;min-height:0;object-fit:contain;image-rendering:pixelated}
-#ct{min-height:84px;text-align:center;font-size:16px;color:var(--text);white-space:pre-line;max-width:420px}
+#intro{position:fixed;inset:0;z-index:40;background:#0b0a14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;transition:opacity .4s}
+#ic{width:100%;max-width:420px;flex:1;min-height:0;object-fit:contain;image-rendering:pixelated}
+#it{min-height:72px;text-align:center;font-size:26px;letter-spacing:3px;color:var(--torch);white-space:pre-line;line-height:1.25}
+#itap{min-height:24px;color:var(--dim);font-size:14px;visibility:hidden;animation:bl 1.2s infinite}
+@keyframes bl{50%{opacity:.2}}
+#cin,#pcin{position:fixed;inset:0;z-index:30;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px}
+#cc,#pc{width:100%;max-width:420px;flex:1;min-height:0;object-fit:contain;image-rendering:pixelated}
+#ct,#pt{min-height:84px;text-align:center;font-size:16px;color:var(--text);white-space:pre-line;max-width:420px}
 #ct b{display:block;color:var(--torch);font-size:24px;margin-bottom:8px}
-#csk{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;background:none;color:var(--dim);border:2px solid var(--edge);font:inherit;font-size:13px;padding:6px 10px}
+#csk,#psk{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;background:none;color:var(--dim);border:2px solid var(--edge);font:inherit;font-size:13px;padding:6px 10px}
 #shop h1{color:var(--torch)}
 #shop button:disabled{opacity:.4}
 #so{display:flex;flex-direction:column;gap:8px;width:100%;max-width:320px;max-height:62vh;overflow:auto}
@@ -51,6 +67,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
   <div id="pad"><span></span><button data-d="0,-1">▲</button><span></span><button data-d="-1,0">◀</button><button data-d="0,1">▼</button><button data-d="1,0">▶</button></div>
 </div>
 <div id="menu" style="display:flex"><div id="lg"></div><h1>MAZMORRAS<br>OLVIDADAS</h1><div>Elige tu héroe</div><div id="cls"></div><div id="cd"></div><button id="play">JUGAR</button></div>
+<div id="intro"><canvas id="ic"></canvas><div id="it"></div><div id="itap">TOCA PARA COMENZAR</div></div>
+<div id="pcin"><canvas id="pc"></canvas><div id="pt"></div><button id="psk">SALTAR ▶▶</button></div>
 <div id="cin"><canvas id="cc"></canvas><div id="ct"></div><button id="csk">SALTAR ▶▶</button></div>
 <div id="shop"><h1>COMERCIANTE</h1><div>Tu oro: <b id="sg">0</b></div><div id="so"></div><button id="sx">Salir</button></div>
 <div id="ov"><h1 id="ot">GAME OVER</h1><div id="od"></div><button id="ob">Jugar de nuevo</button><button id="om">Menú</button><button id="oh" style="display:none">Modo difícil ★</button></div>
@@ -105,7 +123,8 @@ let S;
 const isBoss=f=>f==20||(f>1&&f%5==1);
 const isShop=f=>f%5==0&&f<20;
 const isPz=f=>S.pzf.includes(f);
-let AC=null;function snd(f,d=.08,t='square'){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=t;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.stop(AC.currentTime+d)}catch(e){}}
+let AC=null;function buzz(s){try{const H=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Haptics;if(H)H.impact({style:s});else if(navigator.vibrate)navigator.vibrate(s=='HEAVY'?60:s=='MEDIUM'?35:15)}catch(e){}}
+function snd(f,d=.08,t='square'){if(t=='sawtooth')buzz('HEAVY');else if(f==520)buzz('MEDIUM');else if(f==260)buzz('LIGHT');try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=t;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.stop(AC.currentTime+d)}catch(e){}}
 
 const SC={};
 function mk(){const c=document.createElement('canvas');c.width=c.height=TS+2;return c}
@@ -360,10 +379,77 @@ function menu(){
   Object.keys(CL).forEach(k=>{const b=document.createElement('button');if(k==pick)b.className='on';b.appendChild(icon(k));b.append(CL[k].n);b.onclick=()=>{pick=k;menu()};d.appendChild(b)});
   const c=CL[pick];$('cd').innerHTML='VIDA '+c.hp+' · ATQ '+c.atk+' · ALC '+c.rng+'<br>'+c.d;
 }
-$('play').onclick=()=>{$('menu').style.display='none';newGame()};
+$('play').onclick=startPro;
+const ic=$('ic'),ik=ic.getContext('2d');ic.width=112;ic.height=144;
+const intro={t0:performance.now(),h:'',on:true};
+function introF(now){
+  if(!intro.on)return;
+  const e=now-intro.t0,k=ik;
+  k.fillStyle='#0b0a14';k.fillRect(0,0,112,144);
+  for(let n=0;n<30;n++)if(Math.sin(now/220+n*3)>.2){k.fillStyle='#fff';k.fillRect(Math.round(rn(n)*112),Math.round(rn(n+50)*64),1,1)}
+  k.fillStyle='#1a1630';k.fillRect(0,104,112,40);
+  if(e>900)for(const tx of [10,98]){const ty=70;k.fillStyle='#6b4a1e';k.fillRect(tx+1,ty+6,3,12);k.fillStyle=Math.sin(now/80+tx)>0?'#ffb347':'#ff8a2b';k.fillRect(tx,ty,5,6);k.fillStyle='#ffe08a';k.fillRect(tx+1,ty+1,3,3);const g=k.createRadialGradient(tx+2,ty+3,2,tx+2,ty+3,34);g.addColorStop(0,'rgba(255,170,60,.28)');g.addColorStop(1,'rgba(255,170,60,0)');k.fillStyle=g;k.fillRect(tx-32,ty-30,70,70)}
+  drawS(k,'cave',24,36,4,Math.max(0,Math.min(1,(e-300)/900)));
+  if(e>1800&&e<2050){k.fillStyle='#0b0a14';k.fillRect(48,76,4,4);k.fillRect(60,76,4,4)}
+  if(e>2400){k.fillStyle='rgba(255,179,71,'+(.25+.15*Math.sin(now/150))+')';k.fillRect(46,74,8,8);k.fillRect(58,74,8,8)}
+  const t='MAZMORRAS\nOLVIDADAS'.slice(0,Math.max(0,Math.floor((e-1500)/70)));
+  if(t!==intro.h){$('it').textContent=t;intro.h=t}
+  if(e>3300)$('itap').style.visibility='visible';
+  requestAnimationFrame(introF);
+}
+function introEnd(){if(!intro.on)return;intro.on=false;snd(440,.12);$('intro').style.opacity=0;setTimeout(()=>{$('intro').style.display='none'},400)}
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{if(intro.on&&performance.now()-intro.t0>400)introEnd()}));
+requestAnimationFrame(introF);
+const pcn=$('pc'),pk=pcn.getContext('2d');pcn.width=112;pcn.height=144;
+const PT=['Hace siglos, un reino próspero florecía a los pies de la montaña.','Una noche, la tierra se abrió y una sombra devoró el reino entero.','Dicen que en una mazmorra olvidada, veinte pisos esconden el poder para romper la maldición.','','Tu viaje comienza…'];
+const PD=[4400,4400,5200,5200,3800];
+let pro=null;
+function startPro(){$('menu').style.display='none';pro={t0:performance.now(),h:''};$('pcin').style.display='flex';requestAnimationFrame(pf)}
+function endPro(){if(!pro)return;pro=null;$('pcin').style.display='none';newGame()}
+function pf(now){
+  if(!pro)return;
+  let e=now-pro.t0,i=0;while(i<5&&e>=PD[i]){e-=PD[i];i++}
+  if(i>=5){endPro();return}
+  const l=e/PD[i],k=pk,bob=Math.round(Math.sin(now/150));
+  k.fillStyle='#0b0a14';k.fillRect(0,0,112,144);
+  if(i<2){
+    k.save();if(i==1)k.translate(Math.round(Math.sin(now/30)*2*l),0);
+    ['#0f1030','#171a45','#1f2556'].forEach((c,j)=>{k.fillStyle=c;k.fillRect(0,j*40,112,40)});
+    for(let n=0;n<26;n++)if(Math.sin(now/260+n*5)>.1){k.fillStyle='#fff';k.fillRect(Math.round(rn(n)*112),Math.round(rn(n+40)*70),1,1)}
+    k.fillStyle='#e8e4f5';for(let y=-7;y<=7;y++){const w=Math.floor(Math.sqrt(49-y*y));k.fillRect(88-w,22+y,2*w,1)}
+    for(let x=0;x<112;x++){const y=Math.round(52+Math.abs(x-30)*.8);k.fillStyle='#241f3d';k.fillRect(x,y,1,144-y)}
+    k.fillStyle='#1a1630';k.fillRect(0,112,112,32);
+    for(let hh=0;hh<6;hh++){const x=6+hh*17,lit=i==0||rn(hh+3)>l*1.1;k.fillStyle='#3a3360';k.fillRect(x,100,11,12);k.fillStyle='#5a3b4a';k.fillRect(x-1,98,13,2);k.fillRect(x+1,96,9,2);k.fillRect(x+3,94,5,2);k.fillStyle=lit?'#ffd23f':'#1a1630';k.fillRect(x+4,104,3,4)}
+    k.fillStyle='#4a4270';k.fillRect(88,78,14,34);k.fillRect(88,75,3,3);k.fillRect(94,75,3,3);k.fillRect(100,75,3,3);k.fillStyle=(i==0||l<.5)?'#ffd23f':'#1a1630';k.fillRect(93,86,4,6);
+    if(i==1){k.fillStyle='#e5484d';for(let y=112;y<144;y++){k.fillRect(56+Math.round(Math.sin(y*.5)*4*(y-112)/32),y,Math.max(1,Math.round(l*5)),1)}
+      k.fillStyle='rgba(229,72,77,'+(l*.25)+')';k.fillRect(30,100,52,44);k.fillStyle='rgba(11,10,20,'+(l*.88)+')';k.fillRect(-4,0,120,144)}
+    k.restore();
+  }else if(i==2){
+    k.fillStyle='#171a45';k.fillRect(0,0,112,144);
+    for(let n=0;n<26;n++)if(Math.sin(now/260+n*5)>.1){k.fillStyle='#fff';k.fillRect(Math.round(rn(n)*112),Math.round(rn(n+40)*50),1,1)}
+    for(let x=0;x<112;x++){const y=Math.round(38+Math.abs(x-56)*.9);k.fillStyle='#241f3d';k.fillRect(x,y,1,144-y)}
+    const g=k.createRadialGradient(56,96,8,56,96,52);g.addColorStop(0,'rgba(255,179,71,'+(.12+.1*Math.sin(now/200))+')');g.addColorStop(1,'rgba(255,179,71,0)');k.fillStyle=g;k.fillRect(0,40,112,104);
+    drawS(k,'cave',32,70,3,Math.min(1,l*3));
+  }else if(i==3){
+    ['#3a2a5e','#7a3a6b','#ff7a59','#ffb066'].forEach((c,j)=>{k.fillStyle=c;k.fillRect(0,j*26,112,26)});
+    k.fillStyle='#1a1630';k.fillRect(0,100,112,44);k.fillStyle='#241f3d';k.fillRect(0,100,112,3);
+    drawS(k,'cave',68,76,2);
+    drawS(k,pick,Math.round(-24+l*72),78+bob,2);
+  }else{
+    drawS(k,'cave',0,24,7,Math.min(1,l*2.5));
+    if(Math.sin(now/170)>0){k.fillStyle='rgba(255,179,71,.45)';k.fillRect(40,92,11,11);k.fillRect(61,92,11,11)}
+    if(l>.7){k.fillStyle='rgba(11,10,20,'+((l-.7)/.3)+')';k.fillRect(0,0,112,144)}
+  }
+  const full=i==3?'Tú, valiente '+pick+', eres el último que aún se atreve a entrar.':PT[i];
+  const t=full.slice(0,Math.floor(e/32));
+  if(t!==pro.h){$('pt').textContent=t;pro.h=t}
+  requestAnimationFrame(pf);
+}
+$('psk').onclick=endPro;
 $('om').onclick=menu;$('csk').onclick=endCine;
 {const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(icon('cave'),0,0,64,64);const L=document.createElement('link');L.rel='icon';L.href=c.toDataURL();document.head.appendChild(L)}
 menu();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&!window.Capacitor)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>

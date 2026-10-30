@@ -8,6 +8,7 @@ Juego de mazmorras por turnos en pixel art, pensado para el celular. Funciona **
 - **Moverte / atacar:** botones ▲ ◀ ▼ ▶, deslizar el dedo sobre la mazmorra, o flechas del teclado.
 - **Ataque a distancia:** el mago y el arquero disparan al enemigo que esté en la línea de la dirección que presionas.
 - **Inventario:** toca una poción (cura 5) o un escudo (bloquea 2 de daño en 3 golpes).
+- **Historia:** al pulsar JUGAR se reproduce una cinemática que cuenta cómo llegas a la mazmorra (se puede saltar).
 - **Objetivo:** sobrevivir 20 pisos. Hay tiendas, mini jefes, puzzles, un jefe final con cinemática y modo difícil ★.
 
 | Héroe | Vida | Ataque | Alcance |
