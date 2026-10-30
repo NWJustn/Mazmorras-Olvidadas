@@ -100,14 +100,25 @@ const WS={
  a2:[['#6e4520',2,2,1,2],['#6e4520',1,4,1,3],['#6e4520',0,7,1,3],['#6e4520',1,10,1,3],['#6e4520',2,13,1,2],['#ffd23f',3,1,1,1],['#ffd23f',3,15,1,1],['#e8e4f5',3,2,1,13]],
  a3:[['#5a3b1e',1,8,6,2],['#cbd5e1',0,5,1,8],['#e8e4f5',1,6,1,6],['#e5484d',2,7,1,1],['#ffd23f',0,5,1,1],['#ffd23f',0,12,1,1]]
 };
-function wpn(c,wi,bx,by){(WS[PRE[c]+(wi+1)]||[]).forEach(([col,x,y,w,h])=>{cx.fillStyle=col;cx.fillRect(bx+x,by+y,w,h)})}
+function wpn(c,wi,bx,by){const L=WS[PRE[c]+(wi+1)]||[];L.forEach(([,x,y,w,h])=>{cx.fillStyle='#0b0a14';cx.fillRect(bx+x-1,by+y-1,w+2,h+2)});L.forEach(([col,x,y,w,h])=>{cx.fillStyle=col;cx.fillRect(bx+x,by+y,w,h)})}
 let S;
 const isBoss=f=>f==20||(f>1&&f%5==1);
 const isShop=f=>f%5==0&&f<20;
 const isPz=f=>S.pzf.includes(f);
 let AC=null;function snd(f,d=.08,t='square'){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=t;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.stop(AC.currentTime+d)}catch(e){}}
 
-function spr(n,x,y,oy){const o=SP[n],z=o.m.length,k=TS/z,bx=Math.round(x*TS),by=Math.round(y*TS)+(oy||0);o.m.forEach((row,j)=>{for(let i=0;i<z;i++){const c=row[i];if(c!=='.'&&!(o.sk&&o.sk.includes(c))){cx.fillStyle=o.p[c];cx.fillRect(bx+i*k,by+j*k,k,k)}}})}
+const SC={};
+function mk(){const c=document.createElement('canvas');c.width=c.height=TS+2;return c}
+function sc(n){
+  if(SC[n])return SC[n];
+  const o=SP[n],z=o.m.length,k=TS/z,c=mk(),g=c.getContext('2d'),t=mk(),tg=t.getContext('2d');
+  o.m.forEach((row,j)=>{for(let i=0;i<z;i++){const ch=row[i];if(ch!=='.'&&!(o.sk&&o.sk.includes(ch))){tg.fillStyle=o.p[ch];tg.fillRect(1+i*k,1+j*k,k,k)}}});
+  const s=mk(),sg=s.getContext('2d');sg.drawImage(t,0,0);sg.globalCompositeOperation='source-in';sg.fillStyle='#0b0a14';sg.fillRect(0,0,TS+2,TS+2);
+  [[-1,0],[1,0],[0,-1],[0,1]].forEach(([a,b])=>g.drawImage(s,a,b));
+  tg.globalCompositeOperation='source-atop';const gr=tg.createLinearGradient(0,0,0,TS+2);gr.addColorStop(0,'rgba(255,255,255,.16)');gr.addColorStop(1,'rgba(0,0,0,.3)');tg.fillStyle=gr;tg.fillRect(0,0,TS+2,TS+2);
+  g.drawImage(t,0,0);return SC[n]=c;
+}
+function spr(n,x,y,oy){const bx=Math.round(x*TS),by=Math.round(y*TS);if(n!=='stairs'){cx.fillStyle='rgba(0,0,0,.32)';cx.fillRect(bx+3,by+14,10,2)}cx.drawImage(sc(n),bx-1,by+(oy||0)-1)}
 function sm(o){if(o.vx===undefined){o.vx=o.x;o.vy=o.y}o.vx+=(o.x-o.vx)*.3;o.vy+=(o.y-o.vy)*.3;if(Math.abs(o.x-o.vx)<.02)o.vx=o.x;if(Math.abs(o.y-o.vy)<.02)o.vy=o.y}
 function fx(x,y,txt,col){S.fxs.push({x:x*TS+8,y:y*TS+6,txt,col,t:performance.now()})}
 function burst(x,y,col){for(let i=0;i<10;i++)S.pt.push({x:x*TS+8,y:y*TS+8,vx:(Math.random()-.5)*1.8,vy:(Math.random()-.9)*1.8,t:performance.now(),col})}
@@ -168,10 +179,10 @@ function paint(now){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const px=x*TS,py=y*TS;
     if(S.walls.has(key(x,y))){
-      cx.fillStyle='#463e73';cx.fillRect(px,py,TS,TS);
-      cx.fillStyle='#1a1630';cx.fillRect(px,py+7,TS,1);cx.fillRect(px,py+15,TS,1);cx.fillRect(px+7,py,1,7);cx.fillRect(px+3,py+8,1,7);cx.fillRect(px+11,py+8,1,7);if((x*3+y*5)%7==0){cx.fillStyle='#6b4a1e';cx.fillRect(px+7,py+7,2,6);cx.fillStyle=Math.sin(now/90+x*9)>0?'#ffb347':'#ff8a2b';cx.fillRect(px+6,py+3,4,4);cx.fillStyle='#ffe08a';cx.fillRect(px+7,py+4,2,2)}
+      const th=TH[Math.min(3,Math.floor((S.floor-1)/5))];cx.fillStyle=th.w;cx.fillRect(px,py,TS,TS);cx.fillStyle=th.wh;cx.fillRect(px,py,TS,1);cx.fillRect(px,py+8,TS,1);
+      cx.fillStyle=th.mo;cx.fillRect(px,py+7,TS,1);cx.fillRect(px,py+15,TS,1);cx.fillRect(px+7,py,1,7);cx.fillRect(px+3,py+8,1,7);cx.fillRect(px+11,py+8,1,7);if((x*3+y*5)%7==0){cx.fillStyle='#6b4a1e';cx.fillRect(px+7,py+7,2,6);cx.fillStyle=Math.sin(now/90+x*9)>0?'#ffb347':'#ff8a2b';cx.fillRect(px+6,py+3,4,4);cx.fillStyle='#ffe08a';cx.fillRect(px+7,py+4,2,2)}
     }else{
-      cx.fillStyle=(x+y)%2?'#2b2644':'#272240';cx.fillRect(px,py,TS,TS);cx.fillStyle='#1f1b36';cx.fillRect(px,py+15,TS,1);cx.fillRect(px+15,py,1,TS);const h=(x*7+y*13+S.floor*5)%11;if(h<3){cx.fillStyle='#1a1630';cx.fillRect(px+4+h,py+5,3,1);cx.fillRect(px+6+h,py+6,1,3)}else if(h==5){cx.fillStyle='#35305a';cx.fillRect(px+3,py+3,2,2);cx.fillRect(px+10,py+10,2,2)}
+      const th=TH[Math.min(3,Math.floor((S.floor-1)/5))];cx.fillStyle=(x+y)%2?th.a:th.b;cx.fillRect(px,py,TS,TS);cx.fillStyle=th.l;cx.fillRect(px,py+15,TS,1);cx.fillRect(px+15,py,1,TS);cx.fillStyle=th.h;cx.fillRect(px,py,TS-1,1);cx.fillRect(px,py,1,TS-1);const h=(x*7+y*13+S.floor*5)%11;if(h<3){cx.fillStyle=th.c;cx.fillRect(px+4+h,py+5,3,1);cx.fillRect(px+6+h,py+6,1,3);cx.fillRect(px+7+h,py+9,2,1)}else if(h==5){cx.fillStyle=th.s;cx.fillRect(px+3,py+3,2,2);cx.fillRect(px+10,py+10,2,2);cx.fillRect(px+11,py+4,1,1)}else if(h==7&&th.m){cx.fillStyle=th.m;cx.fillRect(px+2,py+11,3,2);cx.fillRect(px+3,py+10,1,1)}
       if(S.stairs.x==x&&S.stairs.y==y){cx.fillStyle='rgba(201,184,255,'+(.15+.1*Math.sin(now/300))+')';cx.fillRect(px,py,TS,TS);spr('stairs',x,y)}
     }
   }
@@ -189,6 +200,7 @@ function paint(now){
   S.fxs=S.fxs.filter(f=>t-f.t<700);cx.textAlign='center';cx.font='bold 8px monospace';S.fxs.forEach(f=>{const a=(t-f.t)/700,fy=Math.round(f.y-a*10);cx.fillStyle='#000';cx.fillText(f.txt,Math.round(f.x)+1,fy+1);cx.fillStyle=f.col;cx.fillText(f.txt,Math.round(f.x),fy)});cx.textAlign='left';
   S.pj=S.pj.filter(p=>t-p.t<180);S.pj.forEach(p=>{const a=(t-p.t)/180,qx=Math.round(p.x0+(p.x1-p.x0)*a),qy=Math.round(p.y0+(p.y1-p.y0)*a);cx.fillStyle=p.c;cx.fillRect(qx-1,qy-1,3,3);cx.fillStyle='#fff';cx.fillRect(qx,qy,1,1)});
   if(S.fl&&t-S.fl.t<200){cx.fillStyle='rgba(229,72,77,'+(.55*(1-(t-S.fl.t)/200))+')';cx.fillRect(S.fl.x*TS,S.fl.y*TS,TS,TS)}
+  S.walls.forEach(w=>{const[wx,wy]=w.split(',').map(Number);if((wx*3+wy*5)%7==0){const lg=cx.createRadialGradient(wx*TS+8,wy*TS+8,2,wx*TS+8,wy*TS+8,34);lg.addColorStop(0,'rgba(255,170,60,.24)');lg.addColorStop(1,'rgba(255,170,60,0)');cx.fillStyle=lg;cx.fillRect(wx*TS-26,wy*TS-26,68,68)}});
   const vg=cx.createRadialGradient(56,72,40,56,72,100);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');cx.fillStyle=vg;cx.fillRect(0,0,W*TS,H*TS);
 }
 function hud(inv){
@@ -237,6 +249,11 @@ function mv(dx,dy){
 }
 
 const PCOL=['#ff5a5a','#4ade80','#5ec8ff','#ffd23f'],PDIM=['#5a2a35','#1f5a35','#244a66','#665a1f'];
+const TH=[
+ {a:'#2b2644',b:'#272240',l:'#1f1b36',h:'#342e56',c:'#1a1630',s:'#35305a',m:null,w:'#463e73',mo:'#1a1630',wh:'#5a5190'},
+ {a:'#26362f',b:'#222f29',l:'#18241f',h:'#2f463a',c:'#142019',s:'#365046',m:'#4a8a4a',w:'#3f5a4a',mo:'#14201a',wh:'#547a62'},
+ {a:'#3a2530',b:'#34202b',l:'#26151f',h:'#49313e',c:'#1f0f18',s:'#5a3a4a',m:'#8a2a3a',w:'#6b3f55',mo:'#1f0f18',wh:'#8a5470'},
+ {a:'#2f2530',b:'#2a202b',l:'#1e141f',h:'#3d313e',c:'#ff7a2b',s:'#4a3a4c',m:'#ffb347',w:'#5a4a52',mo:'#150d12',wh:'#76626b'}];
 const playing=z=>performance.now()-z.t0<z.seq.length*700+300;
 function mkPz(){const el=[2,3,4,7,8,9,12,13,14,17,18,19],o=[];let f=2+r(2);while(f<=19){if(el.includes(f))o.push(f);f+=3+r(2)}return o}
 function solve(){const z=S.pz;z.done=true;const g=8+S.floor;S.gold+=g;let m='¡Puzzle resuelto! +'+g+' oro. ';if(S.inv.length<4){S.inv.push('pot');m+='Ganaste una poción. '}S.pre=(S.pre||'')+m+'La escalera se abre.';snd(700,.15);setTimeout(()=>snd(900,.2),150);burst(S.stairs.x,S.stairs.y,'#c9b8ff');burst(S.p.x,S.p.y,'#ffd23f')}
